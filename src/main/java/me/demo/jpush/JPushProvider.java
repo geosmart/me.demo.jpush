@@ -23,8 +23,6 @@ import me.demo.jpush.util.CustomHttpClient;
  *
  * @author geosmart
  * @date 2016/12/06
- * @demo curl --insecure -X POST -v https://api.jpush.cn/v3/push -H "Content-Type: application/json"
- * -u "4dc5981e154af7a02ac69503:42717361c40f0345097872d7" -d '{"notification":{"alert":"您有1笔新的待审核订单"},"audience":"all","platform":"all"}'
  */
 public class JPushProvider {
     private static HttpClient httpClient;
