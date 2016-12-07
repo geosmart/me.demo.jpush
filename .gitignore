@@ -1,0 +1,17 @@
+.idea/.name
+.idea/artifacts/demo_jpush_war.xml
+.idea/artifacts/demo_jpush_war_exploded.xml
+.idea/compiler.xml
+.idea/copyright/profiles_settings.xml
+.idea/libraries/Maven__com_alibaba_fastjson_1_1_41.xml
+.idea/libraries/Maven__commons_codec_commons_codec_1_9.xml
+.idea/libraries/Maven__commons_logging_commons_logging_1_2.xml
+.idea/libraries/Maven__junit_junit_4_10.xml
+.idea/libraries/Maven__org_apache_httpcomponents_httpclient_4_5.xml
+.idea/libraries/Maven__org_apache_httpcomponents_httpcore_4_4_1.xml
+.idea/libraries/Maven__org_hamcrest_hamcrest_core_1_1.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+demo.jpush.iml

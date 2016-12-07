@@ -63,10 +63,21 @@ public class JPushProvider {
         initJPushClient();
         try {
             JSONObject notifyJson = new JSONObject();
+            //全平台推送
             notifyJson.put("platform", "all");
             notifyJson.put("audience", "all");
+            //IOS平台参数
+            JSONObject iosOption = new JSONObject();
+            iosOption.put("time_to_live", 60);
+            iosOption.put("apns_production", false);
+            notifyJson.put("options", iosOption);
+            //消息配置
+            JSONObject alertMsg = new JSONObject();
+            alertMsg.put("alert", msg);
+            alertMsg.put("sound", "default");
             JSONObject notification = new JSONObject();
-            notification.put("alert", msg);
+            notification.put("android", alertMsg);
+            notification.put("ios", alertMsg);
             notifyJson.put("notification", notification);
             //设置传入参数
             StringEntity entity = new StringEntity(notifyJson.toString(), "UTF-8");
