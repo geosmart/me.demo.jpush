@@ -12,6 +12,6 @@ public class JProviderTest {
     @Test
     public void test_Push() {
         JPushProvider jpush = new JPushProvider("https://api.jpush.cn/v3/push", "", "", 3);
-        jpush.systemNotify("您有1个未审核的订单");
+        jpush.callService("您有1个未审核的订单");
     }
 }

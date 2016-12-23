@@ -6,9 +6,11 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.protocol.HTTP;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -26,10 +28,10 @@ import me.demo.jpush.util.CustomHttpClient;
  */
 public class JPushProvider {
     private static HttpClient httpClient;
-    public String v3PushUrl;
-    public String masterSecret;
-    public String appKey;
-    public int retry = 3;
+    private String v3PushUrl;
+    private String masterSecret;
+    private String appKey;
+    private int retry = 3;
 
     public JPushProvider(String v3PushUrl, String masterSecret, String appKey, int retry) {
         this.v3PushUrl = v3PushUrl;
@@ -38,7 +40,7 @@ public class JPushProvider {
         this.retry = retry;
     }
 
-    public static String getBasicAuthorization(String appKey, String masterSecret) {
+    private static String getBasicAuthorization(String appKey, String masterSecret) {
         String encodeKey = appKey + ":" + masterSecret;
         return "Basic " + String.valueOf(Base64.encode(encodeKey.getBytes()));
     }
@@ -49,7 +51,7 @@ public class JPushProvider {
      * @param input 输入流
      * @return 读取的字节长度
      */
-    public static byte[] readStream(InputStream input) throws Exception {
+    private static byte[] readStream(InputStream input) throws Exception {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         byte[] tmp = new byte[5 * 1024 * 1024];
         int nr;
@@ -59,8 +61,30 @@ public class JPushProvider {
         return output.toByteArray();
     }
 
-    public boolean systemNotify(String msg) {
+    public boolean callService(String param) {
+        int retryCount = 0;
+        boolean isSuccess = false;
+        //如果未推送成功，重试n次
+        while (!isSuccess && retryCount < retry) {
+            isSuccess = systemNotify(param);
+            if (!isSuccess) {
+                retryCount++;
+            }
+        }
+        return isSuccess;
+    }
+
+    /**
+     * 系统通知
+     *
+     * @param msg 通知内容
+     * @return 是否调用成功
+     */
+    private boolean systemNotify(String msg) {
         initJPushClient();
+        HttpPost post = new HttpPost(v3PushUrl);
+        post.setHeader(HTTP.CONN_DIRECTIVE, HTTP.CONN_CLOSE);
+        post.setConfig(RequestConfig.custom().setConnectTimeout(1000 * 120).setSocketTimeout(1000 * 120).build());
         try {
             JSONObject notifyJson = new JSONObject();
             //全平台推送
@@ -81,11 +105,10 @@ public class JPushProvider {
             notifyJson.put("notification", notification);
             //设置传入参数
             StringEntity entity = new StringEntity(notifyJson.toString(), "UTF-8");
-            HttpPost httpPost = new HttpPost(v3PushUrl);
-            httpPost.setEntity(entity);
-            httpPost.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
-            httpPost.setHeader("Authorization", getBasicAuthorization(appKey, masterSecret));
-            HttpResponse recvJsonObject = httpClient.execute(httpPost);
+            post.setEntity(entity);
+            post.setHeader("Content-Type", ContentType.APPLICATION_JSON.getMimeType());
+            post.setHeader("Authorization", getBasicAuthorization(appKey, masterSecret));
+            HttpResponse recvJsonObject = httpClient.execute(post);
             String response = getResponseStr(recvJsonObject);
             if (response == null) {
                 return false;
@@ -95,6 +118,15 @@ public class JPushProvider {
             // Should review the error, and fix the request
             System.err.println("Should review the error, and fix the request：" + e);
             return false;
+        } finally {
+            try {
+                if (post != null) {
+                    post.abort();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("close jpush post error");
+            }
         }
         return true;
     }
@@ -105,6 +137,9 @@ public class JPushProvider {
         }
     }
 
+    /**
+     * 获取发送结果
+     */
     private String getResponseStr(HttpResponse response) throws Exception {
         int ret = response.getStatusLine().getStatusCode();
         HttpEntity respEntity = response.getEntity();
